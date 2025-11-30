@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tomato Classification</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        background: #f5f6fa;
+        display: flex;
+        justify-content: center;
+        padding: 40px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 480px;
+        background: #fff;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      h1 {
+        margin-top: 0;
+        font-size: 26px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      button {
+        background: #4e73df;
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
+        margin: 6px;
+      }
+
+      button:hover {
+        background: #3953a8;
+      }
+
+      #webcam-container,
+      #image-preview {
+        margin-top: 16px;
+      }
+
+      #image-preview img {
+        width: 300px;
+        border-radius: 12px;
+        margin-top: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      }
+
+      .label-box {
+        background: #f1f3f7;
+        margin-top: 8px;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 14px;
+        text-align: left;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+      label.upload-btn {
+        background: #28a745;
+        padding: 12px 20px;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      label.upload-btn:hover {
+        background: #1f7f35;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Tomato Classification</h1>
+
+      <button onclick="startCamera()">Use Camera</button>
+      <label class="upload-btn" for="file-input">Upload Image</label>
+      <input type="file" id="file-input" accept="image/*" />
+
+      <div id="webcam-container"></div>
+      <div id="image-preview"></div>
+      <div id="label-container"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <script>
+      const MODEL_PATH = "./my_model/";
+      let model, maxPredictions, webcam;
+      let labelContainer = document.getElementById("label-container");
+
+      async function loadModel() {
+        if (!model) {
+          const modelURL = MODEL_PATH + "model.json";
+          const metadataURL = MODEL_PATH + "metadata.json";
+          model = await tmImage.load(modelURL, metadataURL);
+          maxPredictions = model.getTotalClasses();
+        }
+        labelContainer.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+          const div = document.createElement("div");
+          div.className = "label-box";
+          labelContainer.appendChild(div);
+        }
+      }
+
+      async function startCamera() {
+        await loadModel();
+
+        document.getElementById("image-preview").innerHTML = "";
+        document.getElementById("webcam-container").innerHTML = "";
+
+        const flip = true;
+        webcam = new tmImage.Webcam(300, 300, flip);
+        await webcam.setup();
+        await webcam.play();
+
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+        window.requestAnimationFrame(loop);
+      }
+
+      async function loop() {
+        webcam.update();
+        await predictCamera();
+        window.requestAnimationFrame(loop);
+      }
+
+      async function predictCamera() {
+        const prediction = await model.predict(webcam.canvas);
+        updateLabels(prediction);
+      }
+
+      document
+        .getElementById("file-input")
+        .addEventListener("change", async function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          await loadModel();
+
+          if (webcam) {
+            webcam.stop();
+          }
+
+          document.getElementById("webcam-container").innerHTML = "";
+
+          let img = document.createElement("img");
+          img.src = window.URL.createObjectURL(file);
+
+          img.onload = async function () {
+            document.getElementById("image-preview").innerHTML = "";
+            document.getElementById("image-preview").appendChild(img);
+
+            const prediction = await model.predict(img);
+            updateLabels(prediction);
+          };
+        });
+
+      function updateLabels(prediction) {
+        for (let i = 0; i < maxPredictions; i++) {
+          let className = prediction[i].className;
+          let prob = (prediction[i].probability * 100).toFixed(1);
+          labelContainer.childNodes[
+            i
+          ].innerHTML = `${className}: <b>${prob}%</b>`;
+        }
+      }
+    </script>
+  </body>
+</html>
