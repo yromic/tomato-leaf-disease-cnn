@@ -98,6 +98,20 @@
       <button onclick="startCamera()">Use Camera</button>
       <label class="upload-btn" for="file-input">Upload Image</label>
       <input type="file" id="file-input" accept="image/*" />
+      <input
+        type="text"
+        id="image-url-input"
+        placeholder="Paste image URL here"
+        style="
+          width: 95%;
+          padding: 10px;
+          margin-top: 10px;
+          border-radius: 8px;
+          border: 1px solid #ccc;
+        "
+      />
+
+      <button onclick="loadImageFromURL()">Use Image URL</button>
 
       <div id="webcam-container"></div>
       <div id="image-preview"></div>
@@ -191,6 +205,35 @@
             i
           ].innerHTML = `${className}: <b>${prob}%</b>`;
         }
+      }
+      async function loadImageFromURL() {
+        const url = document.getElementById("image-url-input").value;
+        if (!url) {
+          alert("Please paste a valid image URL!");
+          return;
+        }
+
+        await loadModel();
+
+        if (webcam) webcam.stop();
+
+        document.getElementById("webcam-container").innerHTML = "";
+
+        let img = document.createElement("img");
+        img.crossOrigin = "anonymous";
+        img.src = url;
+
+        img.onload = async function () {
+          document.getElementById("image-preview").innerHTML = "";
+          document.getElementById("image-preview").appendChild(img);
+
+          const prediction = await model.predict(img);
+          updateLabels(prediction);
+        };
+
+        img.onerror = function () {
+          alert("Image cannot be loaded. Check the URL!");
+        };
       }
     </script>
   </body>
