@@ -12,81 +12,113 @@
 
     <style>
       body {
+        font-family: Arial, sans-serif;
+        background: #f7f7f7;
         margin: 0;
-        font-family: "Poppins", sans-serif;
-        background: #f5f6fa;
+        padding: 20px;
         display: flex;
         justify-content: center;
-        padding: 40px;
       }
 
       .container {
+        max-width: 450px;
         width: 100%;
-        max-width: 480px;
         background: #fff;
-        padding: 24px;
-        border-radius: 16px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
         text-align: center;
       }
 
       h1 {
-        margin-top: 0;
-        font-size: 26px;
-        font-weight: 600;
+        font-size: 22px;
+        margin-bottom: 15px;
         color: #333;
       }
 
-      button {
-        background: #4e73df;
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      button,
+      select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
         border: none;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 16px;
+        font-size: 15px;
         cursor: pointer;
-        transition: 0.2s;
-        margin: 6px;
+      }
+
+      button {
+        background: #4a90e2;
+        color: white;
+        font-weight: bold;
       }
 
       button:hover {
-        background: #3953a8;
+        background: #357ac9;
+      }
+
+      select {
+        background: #eaeaea;
+        color: #333;
+      }
+
+      .upload-btn {
+        background: #50c878;
+        color: white;
+        display: block;
+        cursor: pointer;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: bold;
+      }
+
+      .upload-btn:hover {
+        background: #3dbb67;
+      }
+
+      #image-url-input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        font-size: 14px;
       }
 
       #webcam-container,
       #image-preview {
-        margin-top: 16px;
+        margin-top: 20px;
       }
 
+      #webcam-container canvas,
       #image-preview img {
-        width: 300px;
+        width: 100%;
         border-radius: 12px;
         margin-top: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
       }
 
-      .label-box {
-        background: #f1f3f7;
-        margin-top: 8px;
-        padding: 10px;
-        border-radius: 6px;
-        font-size: 14px;
-        text-align: left;
-      }
-
-      input[type="file"] {
-        display: none;
-      }
-      label.upload-btn {
-        background: #28a745;
-        padding: 12px 20px;
-        color: white;
-        border-radius: 8px;
-        cursor: pointer;
+      #label-container {
+        margin-top: 15px;
         font-size: 16px;
       }
-      label.upload-btn:hover {
-        background: #1f7f35;
+
+      .credit {
+        margin-top: 25px;
+        font-size: 13px;
+        color: #777;
+      }
+
+      /* Responsiveness */
+      @media (max-width: 480px) {
+        .container {
+          padding: 15px;
+        }
       }
     </style>
   </head>
@@ -95,30 +127,36 @@
     <div class="container">
       <h1>Tomato Classification</h1>
 
-      <button onclick="startCamera()">Use Camera</button>
-      <label class="upload-btn" for="file-input">Upload Image</label>
-      <input type="file" id="file-input" accept="image/*" />
-      <input
-        type="text"
-        id="image-url-input"
-        placeholder="Paste image URL here"
-        style="
-          width: 95%;
-          padding: 10px;
-          margin-top: 10px;
-          border-radius: 8px;
-          border: 1px solid #ccc;
-        "
-      />
+      <div class="controls">
+        <button onclick="startCamera()">Use Camera</button>
 
-      <button onclick="loadImageFromURL()">Use Image URL</button>
+        <select id="camera-select">
+          <option value="user">Kamera Depan</option>
+          <option value="environment">Kamera Belakang</option>
+        </select>
+
+        <label class="upload-btn" for="file-input">Upload Image</label>
+        <input
+          type="file"
+          id="file-input"
+          accept="image/*"
+          style="display: none"
+        />
+
+        <input
+          type="text"
+          id="image-url-input"
+          placeholder="Paste image URL here"
+        />
+
+        <button onclick="loadImageFromURL()">Use Image URL</button>
+      </div>
 
       <div id="webcam-container"></div>
       <div id="image-preview"></div>
       <div id="label-container"></div>
-      <div style="margin-top: 20px; font-size: 14px; color: #888">
-        © 2025 Yromic aka Rifqi
-      </div>
+
+      <div class="credit">© 2025 Yromic aka Rifqi</div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
@@ -151,8 +189,15 @@
         document.getElementById("webcam-container").innerHTML = "";
 
         const flip = true;
+
+        const facingMode = document.getElementById("camera-select").value;
+
         webcam = new tmImage.Webcam(300, 300, flip);
-        await webcam.setup();
+
+        await webcam.setup({
+          facingMode: facingMode,
+        });
+
         await webcam.play();
 
         document.getElementById("webcam-container").appendChild(webcam.canvas);
