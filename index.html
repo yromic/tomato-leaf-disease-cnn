@@ -20,7 +20,8 @@
 
       <div class="flex flex-col gap-3">
         <button
-          onclick="startCamera()"
+          id="camera-button"
+          onclick="toggleCamera()"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold"
         >
           Use Camera
@@ -80,6 +81,7 @@
     <script>
       const MODEL_PATH = "./my_model/";
       let model, maxPredictions, webcam;
+      let cameraActive = false;
 
       // ===============================
       // LOAD MODEL
@@ -133,7 +135,30 @@
 
         webcam.canvas.classList.add("w-full", "h-auto", "rounded-xl");
 
+        cameraActive = true;
+        document.getElementById("camera-button").innerText = "Stop Camera";
+
         window.requestAnimationFrame(loop);
+      }
+
+      async function toggleCamera() {
+        if (cameraActive) {
+          stopCamera();
+        } else {
+          startCamera();
+        }
+      }
+
+      function stopCamera() {
+        if (webcam) {
+          webcam.stop();
+          webcam = null;
+        }
+
+        cameraActive = false;
+
+        document.getElementById("webcam-container").innerHTML = "";
+        document.getElementById("camera-button").innerText = "Use Camera";
       }
 
       async function loop() {
