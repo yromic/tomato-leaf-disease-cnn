@@ -130,6 +130,9 @@
         }
 
         document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+        webcam.canvas.classList.add("w-full", "h-auto", "rounded-xl");
+
         window.requestAnimationFrame(loop);
       }
 
