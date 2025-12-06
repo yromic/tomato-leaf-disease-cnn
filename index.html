@@ -119,7 +119,7 @@
         const flip = true;
         const facingMode = document.getElementById("camera-select").value;
 
-        webcam = new tmImage.Webcam(400, 400, flip);
+        webcam = new tmImage.Webcam(300, 300, flip);
 
         try {
           await webcam.setup({ facingMode });
